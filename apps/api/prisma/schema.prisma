@@ -1,0 +1,145 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Transaction {
+  userId        String?
+  user          User?   @relation(fields: [userId], references: [id])
+  id              String    @id @default(uuid())
+  amount          Float
+  type            TxType
+  category        Category
+  description     String
+  date            DateTime
+  isRecurring     Boolean   @default(false)
+  recurringRuleId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  recurringRule RecurringRule? @relation(fields: [recurringRuleId], references: [id])
+
+  @@index([date])
+  @@index([type])
+  @@index([category])
+}
+
+model RecurringRule {
+  userId        String?
+  user          User?   @relation(fields: [userId], references: [id])
+  id        String    @id @default(uuid())
+  name      String
+  amount    Float
+  type      TxType
+  category  Category
+  frequency Frequency
+  nextDate  DateTime
+  active    Boolean   @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  transactions Transaction[]
+}
+
+model ChatMessage {
+  userId        String?
+  user          User?   @relation(fields: [userId], references: [id])
+  id        String   @id @default(uuid())
+  role      ChatRole
+  content   String
+  toolCalls Json?
+
+  createdAt DateTime @default(now())
+}
+
+enum TxType {
+  INCOME
+  EXPENSE
+}
+
+enum Category {
+  HOUSING
+  FOOD
+  TRANSPORT
+  HEALTH
+  EDUCATION
+  ENTERTAINMENT
+  CLOTHING
+  SALARY
+  INVESTMENT
+  OTHER
+}
+
+enum Frequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+enum ChatRole {
+  user
+  assistant
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  name          String
+  image         String?
+  emailVerified Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  sessions      Session[]
+  accounts      Account[]
+  transactions  Transaction[]
+  recurringRules RecurringRule[]
+  chatMessages  ChatMessage[]
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Account {
+  id                String  @id @default(uuid())
+  userId            String
+  accountId         String
+  providerId        String
+  accessToken       String?
+  refreshToken      String?
+  idToken           String?
+  accessTokenExpiresAt DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope             String?
+  password          String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Verification {
+  id         String   @id @default(uuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}

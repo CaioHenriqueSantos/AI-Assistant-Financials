@@ -1,0 +1,36 @@
+{
+  "name": "@financials/api",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./dist/server.js",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "clean": "rm -rf dist",
+    "db:migrate": "prisma migrate dev",
+    "db:generate": "prisma generate",
+    "db:studio": "prisma studio",
+    "db:seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.0",
+    "@fastify/cors": "^10.0.0",
+    "@financials/core": "workspace:*",
+    "@financials/mcp": "workspace:*",
+    "@financials/shared": "workspace:*",
+    "@prisma/client": "^6.0.0",
+    "better-auth": "^1.5.6",
+    "fastify": "^5.1.0",
+    "groq-sdk": "^1.1.1",
+    "pino": "^9.5.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "prisma": "^6.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}
