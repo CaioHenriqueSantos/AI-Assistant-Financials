@@ -9,12 +9,12 @@ import type { Transaction } from "@financials/shared";
 
 export async function dashboardRoutes(app: FastifyInstance) {
   // GET /api/dashboard
-  app.get("/", async (_req, reply) => {
+  app.get("/", async (req, reply) => {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
     const transactions = await prisma.transaction.findMany({
-      where: { date: { gte: startOfMonth } },
+      where: { date: { gte: startOfMonth }, userId: req.userId },
       orderBy: { date: "desc" },
     });
 

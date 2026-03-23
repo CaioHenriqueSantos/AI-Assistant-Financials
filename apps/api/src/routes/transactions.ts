@@ -7,7 +7,7 @@ export async function transactionsRoutes(app: FastifyInstance) {
   app.get("/", async (req, reply) => {
     const { period, category, type } = req.query as Record<string, string | undefined>;
 
-    const where: Record<string, unknown> = {};
+    const where: Record<string, unknown> = { userId: req.userId };
 
     if (type) where["type"] = type;
     if (category) where["category"] = category;
@@ -45,6 +45,7 @@ export async function transactionsRoutes(app: FastifyInstance) {
       data: {
         ...parsed.data,
         date: parsed.data.date,
+        userId: req.userId,
       },
     });
 
@@ -54,7 +55,7 @@ export async function transactionsRoutes(app: FastifyInstance) {
   // DELETE /api/transactions/:id
   app.delete("/:id", async (req, reply) => {
     const { id } = req.params as { id: string };
-    await prisma.transaction.delete({ where: { id } });
+    await prisma.transaction.delete({ where: { id, userId: req.userId } });
     return reply.status(204).send();
   });
 }

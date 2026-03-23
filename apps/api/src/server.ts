@@ -5,6 +5,7 @@ import { recurringRoutes } from "./routes/recurring.js";
 import { chatRoutes } from "./routes/chat.js";
 import { dashboardRoutes } from "./routes/dashboard.js";
 import { auth } from "./lib/auth.js";
+import { requireAuth } from "./middleware/auth.js";
 
 const app = Fastify({ logger: true });
 
@@ -35,6 +36,13 @@ app.all("/api/auth/*", async (req, reply) => {
   reply.status(response.status);
   return reply.send(await response.text());
 });
+
+// Protege todas as rotas /api/* exceto /api/auth/* e /api/health
+app.addHook("preHandler", async (req, reply) => {
+  if (req.url.startsWith("/api/auth") || req.url === "/api/health") return;
+  return requireAuth(req, reply);
+});
+
 
 
 // Routes

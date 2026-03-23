@@ -37,17 +37,18 @@ export async function chatRoutes(app: FastifyInstance) {
     const { message } = parsed.data;
 
     await prisma.chatMessage.create({
-      data: { role: "user", content: message },
+      data: { role: "user", content: message, userId: req.userId },
     });
 
     const history = await prisma.chatMessage.findMany({
+      where: { userId: req.userId },
       orderBy: { createdAt: "asc" },
       take: 20,
     });
 
     const deps = {
       getTransactions: async (filters: { period: string; category?: string; type?: string }) => {
-        const where: Record<string, unknown> = {};
+        const where: Record<string, unknown> = { userId: req.userId };
         if (filters.type) where["type"] = filters.type;
         if (filters.category) where["category"] = filters.category;
 
@@ -68,7 +69,7 @@ export async function chatRoutes(app: FastifyInstance) {
         return prisma.transaction.findMany({ where, orderBy: { date: "desc" } }) as Promise<Transaction[]>;
       },
       getRecurringRules: async (filters: { type?: string }) => {
-        const where: Record<string, unknown> = { active: true };
+        const where: Record<string, unknown> = { active: true, userId: req.userId };
         if (filters.type) where["type"] = filters.type;
         return prisma.recurringRule.findMany({ where }) as Promise<RecurringRule[]>;
       },
@@ -127,6 +128,7 @@ export async function chatRoutes(app: FastifyInstance) {
         role: "assistant",
         content: assistantContent,
         toolCalls: toolCallsLog.length > 0 ? toolCallsLog : undefined,
+        userId: req.userId,
       },
     });
 

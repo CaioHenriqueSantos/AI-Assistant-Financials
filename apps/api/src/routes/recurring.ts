@@ -6,7 +6,7 @@ export async function recurringRoutes(app: FastifyInstance) {
   // GET /api/recurring
   app.get("/", async (req, reply) => {
     const { type } = req.query as { type?: string };
-    const where: Record<string, unknown> = { active: true };
+    const where: Record<string, unknown> = { active: true, userId: req.userId };
     if (type) where["type"] = type;
 
     const rules = await prisma.recurringRule.findMany({
@@ -24,7 +24,9 @@ export async function recurringRoutes(app: FastifyInstance) {
       return reply.status(400).send({ error: parsed.error.flatten() });
     }
 
-    const rule = await prisma.recurringRule.create({ data: parsed.data });
+    const rule = await prisma.recurringRule.create({
+      data: { ...parsed.data, userId: req.userId }
+    });
     return reply.status(201).send(rule);
   });
 
@@ -32,7 +34,7 @@ export async function recurringRoutes(app: FastifyInstance) {
   app.delete("/:id", async (req, reply) => {
     const { id } = req.params as { id: string };
     await prisma.recurringRule.update({
-      where: { id },
+      where: { id, userId: req.userId },
       data: { active: false },
     });
     return reply.status(204).send();
