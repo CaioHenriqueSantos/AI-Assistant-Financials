@@ -10,7 +10,6 @@ Assistente financeiro inteligente com IA.
 - Lançamento de receitas e despesas por categoria
 - Recorrências e projeção de fluxo de caixa
 - Chat com assistente IA baseado em dados reais
-- Autenticação com Google (multi-usuário)
 
 ---
 
