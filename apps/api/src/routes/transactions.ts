@@ -55,7 +55,17 @@ export async function transactionsRoutes(app: FastifyInstance) {
   // DELETE /api/transactions/:id
   app.delete("/:id", async (req, reply) => {
     const { id } = req.params as { id: string };
-    await prisma.transaction.delete({ where: { id, userId: req.userId } });
+
+    const item = await prisma.transaction.findUnique({
+      where: { id },
+      select: { userId: true },
+    });
+
+    if (!item || item.userId !== req.userId) {
+      return reply.status(404).send({ error: "Recurso não encontrado" });
+    }
+
+    await prisma.transaction.delete({ where: { id } });
     return reply.status(204).send();
   });
 }

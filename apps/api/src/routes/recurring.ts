@@ -33,8 +33,18 @@ export async function recurringRoutes(app: FastifyInstance) {
   // DELETE /api/recurring/:id (soft delete)
   app.delete("/:id", async (req, reply) => {
     const { id } = req.params as { id: string };
+
+    const item = await prisma.recurringRule.findUnique({
+      where: { id },
+      select: { userId: true },
+    });
+
+    if (!item || item.userId !== req.userId) {
+      return reply.status(404).send({ error: "Recurso não encontrado" });
+    }
+
     await prisma.recurringRule.update({
-      where: { id, userId: req.userId },
+      where: { id },
       data: { active: false },
     });
     return reply.status(204).send();

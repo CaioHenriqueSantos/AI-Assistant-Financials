@@ -2,10 +2,15 @@ import { signIn } from "../lib/auth";
 
 export default function Login() {
   const handleGoogle = async () => {
-    await signIn.social({
-      provider: "google",
-      callbackURL: "http://localhost:5173/",
-    });
+    try {
+      const result = await signIn.social({
+        provider: "google",
+        callbackURL: "http://localhost:5173/",
+      });
+      console.log("signIn result:", result);
+    } catch (err) {
+      console.error("signIn error:", err);
+    }
   };
 
   return (

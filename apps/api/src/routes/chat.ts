@@ -5,6 +5,7 @@ import { FINANCIAL_TOOLS, executeTool } from "@financials/mcp";
 import { SendMessageSchema } from "@financials/shared";
 import type { Transaction, RecurringRule } from "@financials/shared";
 import type Groq from "groq-sdk";
+import { sanitizeUserMessage } from "../lib/ai-guard.js";
 
 const SYSTEM_PROMPT = `Você é o Financials IA, um assistente financeiro pessoal inteligente e empático.
 
@@ -19,22 +20,31 @@ Regras importantes:
 
 export async function chatRoutes(app: FastifyInstance) {
   // GET /api/chat/history
-  app.get("/history", async (_req, reply) => {
+  app.get("/history", async (req, reply) => {
     const messages = await prisma.chatMessage.findMany({
+      where: { userId: req.userId },
       orderBy: { createdAt: "asc" },
       take: 100,
     });
     return reply.send(messages);
   });
 
+
   // POST /api/chat
-  app.post("/", async (req, reply) => {
+  app.post("/", {
+    config: {
+      rateLimit: {
+        max: 30,
+        timeWindow: "1 minute",
+      },
+    },
+    handler: async (req, reply) => {
     const parsed = SendMessageSchema.safeParse(req.body);
     if (!parsed.success) {
       return reply.status(400).send({ error: parsed.error.flatten() });
     }
 
-    const { message } = parsed.data;
+    const message = sanitizeUserMessage(parsed.data.message);
 
     await prisma.chatMessage.create({
       data: { role: "user", content: message, userId: req.userId },
@@ -133,5 +143,6 @@ export async function chatRoutes(app: FastifyInstance) {
     });
 
     return reply.send({ message: saved.content, id: saved.id });
+    },
   });
 }
