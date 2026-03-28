@@ -104,6 +104,7 @@ export async function chatRoutes(app: FastifyInstance) {
       });
 
       const choice = response.choices[0];
+      if (!choice) { continueLoop = false; continue; }
 
       if (choice.finish_reason === "tool_calls" && choice.message.tool_calls) {
         const toolCalls = choice.message.tool_calls;

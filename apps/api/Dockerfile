@@ -15,11 +15,11 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN pnpm install --frozen-lockfile
+RUN pnpm --filter @financials/api exec prisma generate
 RUN pnpm --filter @financials/shared build
 RUN pnpm --filter @financials/core build
 RUN pnpm --filter @financials/mcp build
 RUN pnpm --filter @financials/api build
-RUN pnpm --filter @financials/api exec prisma generate
 
 FROM node:22-alpine AS runner
 RUN npm install -g pnpm

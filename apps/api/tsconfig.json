@@ -6,9 +6,9 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "paths": {
-      "@financials/shared": ["../../packages/shared/src/index.ts"],
-      "@financials/core": ["../../packages/core/src/index.ts"],
-      "@financials/mcp": ["../../packages/mcp/src/index.ts"]
+      "@financials/shared": ["../../packages/shared/dist/index.js"],
+      "@financials/core": ["../../packages/core/dist/index.js"],
+      "@financials/mcp": ["../../packages/mcp/dist/index.js"]
     }
   },
   "include": ["src"]
