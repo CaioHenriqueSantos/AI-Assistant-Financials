@@ -20,12 +20,12 @@ RUN pnpm --filter @financials/shared build
 RUN pnpm --filter @financials/core build
 RUN pnpm --filter @financials/mcp build
 RUN pnpm --filter @financials/api build
-RUN pnpm --filter @financials/api deploy --prod /app/deploy
+RUN pnpm --filter @financials/api deploy /app/deploy
+RUN cd /app/deploy && node_modules/.bin/prisma generate
 
 FROM node:22-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=builder /app/deploy .
-COPY --from=builder /app/apps/api/prisma ./prisma
 EXPOSE 3001
 CMD ["node", "dist/server.js"]
