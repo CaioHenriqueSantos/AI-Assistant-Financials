@@ -138,7 +138,7 @@ export async function chatRoutes(app: FastifyInstance) {
       data: {
         role: "assistant",
         content: assistantContent,
-        ...(toolCallsLog.length > 0 ? { toolCalls: toolCallsLog } : {}),
+        ...(toolCallsLog.length > 0 ? { toolCalls: JSON.parse(JSON.stringify(toolCallsLog)) } : {}),
         userId: req.userId,
       },
     });
