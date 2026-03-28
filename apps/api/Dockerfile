@@ -14,6 +14,7 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+RUN pnpm install --frozen-lockfile
 RUN pnpm --filter @financials/shared build
 RUN pnpm --filter @financials/core build
 RUN pnpm --filter @financials/mcp build
