@@ -5,7 +5,7 @@ export default function Login() {
     try {
       const result = await signIn.social({
         provider: "google",
-        callbackURL: "/",
+        callbackURL: window.location.origin + "/",
       });
       console.log("signIn result:", result);
     } catch (err) {
