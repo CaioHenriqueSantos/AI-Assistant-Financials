@@ -20,12 +20,6 @@ export const auth = betterAuth({
   session: {
     expiresIn: 60 * 60 * 24 * 30,
   },
-  advanced: {
-    crossSubDomainCookies: {
-      enabled: !!process.env.COOKIE_DOMAIN,
-      ...(process.env.COOKIE_DOMAIN ? { domain: process.env.COOKIE_DOMAIN } : {}),
-    },
-  },
 });
 
 export type Auth = typeof auth;
