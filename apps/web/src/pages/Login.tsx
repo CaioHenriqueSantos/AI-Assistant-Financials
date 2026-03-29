@@ -1,15 +1,25 @@
+import { useState } from "react";
 import { signIn } from "../lib/auth";
 
 export default function Login() {
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
   const handleGoogle = async () => {
+    setError(null);
+    setLoading(true);
     try {
       const result = await signIn.social({
         provider: "google",
         callbackURL: window.location.origin + "/",
       });
-      console.log("signIn result:", result);
-    } catch (err) {
-      console.error("signIn error:", err);
+      if (result.error) {
+        setError("Falha ao conectar com Google. Tente novamente.");
+      }
+    } catch {
+      setError("Erro de conexao. Verifique sua internet.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -30,8 +40,11 @@ export default function Login() {
             <path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" />
             <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" />
           </svg>
-          Entrar com Google
+          {loading ? "Conectando..." : "Entrar com Google"}
         </button>
+        {error && (
+          <p className="mt-4 text-sm text-red-400">{error}</p>
+        )}
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, ApiError } from "@/lib/api";
 
 interface DashboardData {
   balance: { totalIncome: number; totalExpenses: number; balance: number };
@@ -32,12 +32,17 @@ const levelLabels: Record<string, string> = {
 };
 
 export default function Dashboard() {
-  const { data, isLoading } = useQuery<DashboardData>({
+  const { data, isLoading, error } = useQuery<DashboardData>({
     queryKey: ["dashboard"],
     queryFn: () => apiFetch("/api/dashboard").then((r) => r.json()),
+    retry: (count, err) => {
+      if (err instanceof ApiError && err.status === 401) return false;
+      return count < 2;
+    },
   });
 
   if (isLoading) return <p className="text-gray-400">Carregando...</p>;
+  if (error) return <p className="text-red-400">Erro ao carregar dashboard.</p>;
   if (!data) return null;
 
   const fmt = (v: number) =>
