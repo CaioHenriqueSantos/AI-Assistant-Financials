@@ -8,7 +8,9 @@ export const auth = betterAuth({
   }),
   secret: process.env.AUTH_SECRET!,
   baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3001",
-  trustedOrigins: ["http://localhost:5173"],
+  trustedOrigins: process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(",")
+    : ["http://localhost:5173"],
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID!,

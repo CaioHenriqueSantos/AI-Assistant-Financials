@@ -12,8 +12,12 @@ import rateLimitPlugin from "./plugins/rate-limit.js";
 
 const app = Fastify({ logger: true });
 
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(",")
+  : ["http://localhost:5173"];
+
 await app.register(cors, {
-  origin: "http://localhost:5173",
+  origin: allowedOrigins,
   credentials: true,
 });
 
