@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { apiFetch } from "@/lib/api";
 
 interface DashboardData {
   balance: { totalIncome: number; totalExpenses: number; balance: number };
@@ -33,7 +34,7 @@ const levelLabels: Record<string, string> = {
 export default function Dashboard() {
   const { data, isLoading } = useQuery<DashboardData>({
     queryKey: ["dashboard"],
-    queryFn: () => fetch("/api/dashboard").then((r) => r.json()),
+    queryFn: () => apiFetch("/api/dashboard").then((r) => r.json()),
   });
 
   if (isLoading) return <p className="text-gray-400">Carregando...</p>;

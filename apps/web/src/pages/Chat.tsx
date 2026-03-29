@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useRef, useEffect } from "react";
+import { apiFetch } from "@/lib/api";
 
 
 interface ChatMessage {
@@ -17,12 +18,12 @@ export default function Chat() {
 
   const { data: history = [] } = useQuery<ChatMessage[]>({
     queryKey: ["chat-history"],
-    queryFn: () => fetch("/api/chat/history").then((r) => r.json()),
+    queryFn: () => apiFetch("/api/chat/history").then((r) => r.json()),
   });
 
   const send = useMutation({
     mutationFn: (message: string) =>
-      fetch("/api/chat", {
+      apiFetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message }),

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import type { TransactionCategory, TransactionType, Frequency } from "@financials/shared";
+import { apiFetch } from "@/lib/api";
 
 interface RecurringRule {
   id: string;
@@ -41,12 +42,12 @@ export default function Recurring() {
 
   const { data: rules = [], isLoading } = useQuery<RecurringRule[]>({
     queryKey: ["recurring"],
-    queryFn: () => fetch("/api/recurring").then((r) => r.json()),
+    queryFn: () => apiFetch("/api/recurring").then((r) => r.json()),
   });
 
   const create = useMutation({
     mutationFn: (data: typeof form) =>
-      fetch("/api/recurring", {
+      apiFetch("/api/recurring", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...data, amount: Number(data.amount) }),

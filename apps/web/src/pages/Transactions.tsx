@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import type { TransactionCategory, TransactionType } from "@financials/shared";
+import { apiFetch } from "@/lib/api";
 
 interface Transaction {
   id: string;
@@ -44,12 +45,12 @@ export default function Transactions() {
 
   const { data: transactions = [], isLoading } = useQuery<Transaction[]>({
     queryKey: ["transactions"],
-    queryFn: () => fetch("/api/transactions?period=current_month").then((r) => r.json()),
+    queryFn: () => apiFetch("/api/transactions?period=current_month").then((r) => r.json()),
   });
 
   const create = useMutation({
     mutationFn: (data: typeof form) =>
-      fetch("/api/transactions", {
+      apiFetch("/api/transactions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...data, amount: Number(data.amount) }),
