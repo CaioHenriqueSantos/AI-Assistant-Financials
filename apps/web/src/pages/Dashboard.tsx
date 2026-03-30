@@ -353,7 +353,7 @@ export default function Dashboard() {
                     tickFormatter={(v: number) => fmtCompact(v)}
                   />
                   <Tooltip
-                    formatter={(value: number) => [fmt(value), "Gasto"]}
+                    formatter={(value) => [fmt(Number(value ?? 0)), "Gasto"]}
                     contentStyle={{
                       background: "var(--card)",
                       border: "1px solid var(--border)",
