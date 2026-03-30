@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wsl --list --verbose)",
+      "Bash(wsl -d Ubuntu -u root -- cat /etc/passwd)",
+      "Bash(wsl -d Ubuntu -u t6pro bash -c 'RUNZSH=no CHSH=yes sh -c \"\"$\\(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh\\)\"\"')",
+      "Bash(wsl -d Ubuntu -u t6pro bash -c \"ls ~/.oh-my-zsh 2>&1 && echo ''OMZ instalado''\")",
+      "Bash(wsl -d Ubuntu -u t6pro zsh -c \"git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/.oh-my-zsh/custom/themes/powerlevel10k\")",
+      "Bash(pnpm --filter @financials/api add @fastify/rate-limit fastify-plugin)"
+    ]
+  }
+}
