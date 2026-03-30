@@ -46,10 +46,16 @@ export default function Chat() {
         body: JSON.stringify({ message }),
       }).then((r) => r.json()),
     onSuccess: () => {
-      setOptimisticMsg(null);
       qc.invalidateQueries({ queryKey: ["chat-history"] });
     },
   });
+
+  // Clear optimistic message only after history has loaded the new messages
+  useEffect(() => {
+    if (optimisticMsg && history.length > 0) {
+      setOptimisticMsg(null);
+    }
+  }, [history, optimisticMsg]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });

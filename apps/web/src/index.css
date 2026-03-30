@@ -15,7 +15,7 @@
 
     --foreground: oklch(0.145 0 0);
 
-    --card: oklch(1 0 0 / 0.75);
+    --card: oklch(1 0 0);
 
     --card-foreground: oklch(0.145 0 0);
 
@@ -151,6 +151,7 @@
   }
   * {
     border-color: var(--border);
+    -webkit-tap-highlight-color: transparent;
   }
   html {
     @apply font-sans;
@@ -165,10 +166,11 @@
     background-color: var(--card);
     backdrop-filter: blur(8px);
     padding: 0.5rem 0.75rem;
-    font-size: 0.875rem;
+    font-size: 1rem; /* 16px — prevents iOS auto-zoom on focus */
     color: var(--foreground);
     transition: box-shadow 0.15s, border-color 0.15s;
     outline: none;
+    -webkit-appearance: none;
   }
   .field::placeholder {
     color: var(--muted-foreground);

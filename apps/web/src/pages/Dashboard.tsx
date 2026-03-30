@@ -75,6 +75,28 @@ const fmtCompact = (v: number) =>
     maximumFractionDigits: 1,
   }).format(v);
 
+// ─── Custom Tooltip ──────────────────────────────────────────────────────────
+
+function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number }>; label?: string }) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-popover backdrop-blur-md border border-foreground/[0.08] rounded-xl px-3 py-2 text-sm shadow-lg">
+      <p className="font-medium text-foreground">{label}</p>
+      <p className="text-muted-foreground mt-0.5">{fmt(Number(payload[0]?.value ?? 0))}</p>
+    </div>
+  );
+}
+
+// ─── Health colors ───────────────────────────────────────────────────────────
+
+const HEALTH_ICON_COLOR: Record<string, string> = {
+  excellent: "var(--finance-income)",
+  good: "var(--finance-income)",
+  fair: "var(--finance-warning)",
+  poor: "var(--finance-expense)",
+  critical: "var(--finance-expense)",
+};
+
 // ─── KPI Card ────────────────────────────────────────────────────────────────
 
 interface KpiCardProps {
@@ -85,6 +107,8 @@ interface KpiCardProps {
   icon: React.ElementType;
   delay?: number;
   statusIcon?: ReactNode;
+  valueColor?: string;
+  iconColor?: string;
 }
 
 function KpiCard({
@@ -95,6 +119,8 @@ function KpiCard({
   icon: Icon,
   delay = 0,
   statusIcon,
+  valueColor,
+  iconColor,
 }: KpiCardProps) {
   return (
     <Card
@@ -109,10 +135,15 @@ function KpiCard({
         <CardTitle className="text-sm font-medium text-muted-foreground">
           {title}
         </CardTitle>
-        <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
+        <Icon
+          className="h-4 w-4 shrink-0"
+          style={{ color: iconColor ?? "var(--muted-foreground)" }}
+        />
       </CardHeader>
       <CardContent className="space-y-3">
-        <div className="text-3xl font-bold tracking-tight">{value}</div>
+        <div className="text-3xl font-bold tracking-tight" style={valueColor ? { color: valueColor } : undefined}>
+          {value}
+        </div>
         <div className="border-t border-border pt-3">
           <div className="flex items-center justify-between gap-1">
             <p className="text-sm font-semibold leading-tight">{statusText}</p>
@@ -276,7 +307,10 @@ export default function Dashboard() {
           statusText="Total do mês"
           description="Todas as entradas registradas"
           icon={ArrowUpRight}
+          iconColor="var(--finance-income)"
           delay={0}
+          valueColor="var(--finance-income)"
+          statusIcon={<ArrowUpRight className="h-4 w-4 shrink-0" style={{ color: "var(--finance-income)" }} />}
         />
         <KpiCard
           title="Despesas"
@@ -284,8 +318,10 @@ export default function Dashboard() {
           statusText="Total do mês"
           description="Todos os gastos registrados"
           icon={ArrowDownRight}
+          iconColor="var(--finance-expense)"
           delay={75}
-          statusIcon={<ArrowDownRight className="h-4 w-4 text-muted-foreground shrink-0" />}
+          valueColor="var(--finance-expense)"
+          statusIcon={<ArrowDownRight className="h-4 w-4 shrink-0" style={{ color: "var(--finance-expense)" }} />}
         />
         <KpiCard
           title="Saldo"
@@ -298,11 +334,12 @@ export default function Dashboard() {
           }
           icon={Wallet}
           delay={150}
+          valueColor={isPositive ? "var(--finance-income)" : "var(--finance-expense)"}
           statusIcon={
             isPositive ? (
-              <ArrowUpRight className="h-4 w-4 text-muted-foreground shrink-0" />
+              <ArrowUpRight className="h-4 w-4 shrink-0" style={{ color: "var(--finance-income)" }} />
             ) : (
-              <ArrowDownRight className="h-4 w-4 text-muted-foreground shrink-0" />
+              <ArrowDownRight className="h-4 w-4 shrink-0" style={{ color: "var(--finance-expense)" }} />
             )
           }
         />
@@ -314,6 +351,7 @@ export default function Dashboard() {
             healthDescriptions[health.level] ?? "Score de saúde calculado"
           }
           icon={Activity}
+          iconColor={HEALTH_ICON_COLOR[health.level] ?? "var(--muted-foreground)"}
           delay={225}
         />
       </div>
@@ -338,7 +376,7 @@ export default function Dashboard() {
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart
                   data={chartData}
-                  margin={{ top: 4, right: 4, left: -16, bottom: 0 }}
+                  margin={{ top: 4, right: 8, left: 0, bottom: 0 }}
                 >
                   <XAxis
                     dataKey="name"
@@ -351,18 +389,11 @@ export default function Dashboard() {
                     axisLine={false}
                     tickLine={false}
                     tickFormatter={(v: number) => fmtCompact(v)}
+                    width={56}
                   />
                   <Tooltip
-                    formatter={(value) => [fmt(Number(value ?? 0)), "Gasto"]}
-                    contentStyle={{
-                      background: "var(--card)",
-                      border: "1px solid var(--border)",
-                      borderRadius: "8px",
-                      fontSize: "12px",
-                      color: "var(--foreground)",
-                      boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-                    }}
-                    cursor={{ fill: "var(--muted)", opacity: 0.5 }}
+                    content={<ChartTooltip />}
+                    cursor={{ fill: "#888888", fillOpacity: 0.08 }}
                   />
                   <Bar
                     dataKey="value"
@@ -472,7 +503,10 @@ export default function Dashboard() {
                     <td className="hidden px-4 py-3.5 text-muted-foreground md:table-cell">
                       {new Date(tx.date).toLocaleDateString("pt-BR")}
                     </td>
-                    <td className="px-6 py-3.5 text-right font-bold tabular-nums">
+                    <td
+                      className="px-6 py-3.5 text-right font-bold tabular-nums"
+                      style={{ color: tx.type === "INCOME" ? "var(--finance-income)" : "var(--finance-expense)" }}
+                    >
                       {tx.type === "INCOME" ? "+" : "−"}
                       {fmt(tx.amount)}
                     </td>

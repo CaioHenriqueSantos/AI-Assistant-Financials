@@ -5,6 +5,13 @@ import { apiFetch } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Loader2, Trash2 } from "lucide-react";
 
 interface Transaction {
@@ -28,6 +35,41 @@ const CATEGORY_LABELS: Record<TransactionCategory, string> = {
 
 const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
+function TransactionsSkeleton() {
+  return (
+    <div className="space-y-6 animate-in fade-in duration-300">
+      <div className="space-y-1">
+        <Skeleton className="h-7 w-36" />
+        <Skeleton className="h-4 w-56" />
+      </div>
+      <Card>
+        <CardHeader className="pb-3"><Skeleton className="h-5 w-32" /></CardHeader>
+        <CardContent className="space-y-3">
+          <Skeleton className="h-10 w-full" />
+          <div className="grid grid-cols-2 gap-3">
+            {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
+          </div>
+          <Skeleton className="h-10 w-full" />
+        </CardContent>
+      </Card>
+      <Card className="overflow-hidden p-0 gap-0">
+        <CardHeader className="px-6 py-4"><Skeleton className="h-5 w-32" /></CardHeader>
+        <div className="px-6 pb-6 space-y-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="flex items-center justify-between">
+              <div className="space-y-1.5">
+                <Skeleton className="h-4 w-36" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+              <Skeleton className="h-4 w-20" />
+            </div>
+          ))}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
 export default function Transactions() {
   const qc = useQueryClient();
   const [amountDisplay, setAmountDisplay] = useState("");
@@ -47,7 +89,7 @@ export default function Transactions() {
     setForm(f => ({ ...f, amount: num.toString() }));
   };
 
-  const { data: transactions = [], isLoading } = useQuery<Transaction[]>({
+  const { data: transactions = [], isLoading, isFetched } = useQuery<Transaction[]>({
     queryKey: ["transactions"],
     queryFn: () => apiFetch("/api/transactions?period=current_month").then((r) => r.json()),
   });
@@ -74,6 +116,8 @@ export default function Transactions() {
       qc.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
+
+  if (isLoading && !isFetched) return <TransactionsSkeleton />;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-400 [animation-fill-mode:both]">
@@ -108,23 +152,35 @@ export default function Transactions() {
               value={form.date}
               onChange={(e) => setForm({ ...form, date: e.target.value })}
             />
-            <select
-              className="field"
+            <Select
               value={form.type}
-              onChange={(e) => setForm({ ...form, type: e.target.value as TransactionType })}
+              onValueChange={(v) => setForm({ ...form, type: v as TransactionType })}
             >
-              <option value="EXPENSE">Despesa</option>
-              <option value="INCOME">Receita</option>
-            </select>
-            <select
-              className="field"
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="EXPENSE">
+                  <span className="text-[var(--finance-expense)]">● </span>Despesa
+                </SelectItem>
+                <SelectItem value="INCOME">
+                  <span className="text-[var(--finance-income)]">● </span>Receita
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            <Select
               value={form.category}
-              onChange={(e) => setForm({ ...form, category: e.target.value as TransactionCategory })}
+              onValueChange={(v) => setForm({ ...form, category: v as TransactionCategory })}
             >
-              {CATEGORIES.map((c) => (
-                <option key={c} value={c}>{CATEGORY_LABELS[c]}</option>
-              ))}
-            </select>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {CATEGORIES.map((c) => (
+                  <SelectItem key={c} value={c}>{CATEGORY_LABELS[c]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <Button
             className="w-full"
@@ -142,11 +198,7 @@ export default function Transactions() {
         <CardHeader className="px-6 py-4">
           <CardTitle className="text-base">Histórico do mês</CardTitle>
         </CardHeader>
-        {isLoading ? (
-          <div className="px-6 pb-6 space-y-3">
-            {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
-          </div>
-        ) : transactions.length === 0 ? (
+        {transactions.length === 0 ? (
           <p className="px-6 pb-6 text-sm text-muted-foreground">Nenhum lançamento este mês.</p>
         ) : (
           <table className="w-full text-sm">
@@ -165,7 +217,9 @@ export default function Transactions() {
                   <td className="max-w-[160px] truncate px-6 py-3.5 font-medium">{tx.description}</td>
                   <td className="hidden px-4 py-3.5 text-muted-foreground sm:table-cell">{CATEGORY_LABELS[tx.category]}</td>
                   <td className="hidden px-4 py-3.5 text-muted-foreground md:table-cell">{new Date(tx.date).toLocaleDateString("pt-BR")}</td>
-                  <td className="px-6 py-3.5 text-right font-bold tabular-nums">
+                  <td className="px-6 py-3.5 text-right font-bold tabular-nums"
+                    style={{ color: tx.type === "INCOME" ? "var(--finance-income)" : "var(--finance-expense)" }}
+                  >
                     {tx.type === "INCOME" ? "+" : "−"}{fmt(tx.amount)}
                   </td>
                   <td className="px-4 py-3.5 text-right">

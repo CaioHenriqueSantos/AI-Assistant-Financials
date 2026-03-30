@@ -5,6 +5,13 @@ import { apiFetch } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Loader2, Trash2, Repeat } from "lucide-react";
 
 interface RecurringRule {
@@ -32,6 +39,35 @@ const FREQ_LABELS: Record<Frequency, string> = {
 
 const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
+function RecurringSkeleton() {
+  return (
+    <div className="space-y-6 animate-in fade-in duration-300">
+      <div className="space-y-1">
+        <Skeleton className="h-7 w-36" />
+        <Skeleton className="h-4 w-52" />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <Card><CardContent className="pt-6 space-y-2"><Skeleton className="h-4 w-24" /><Skeleton className="h-8 w-32" /><Skeleton className="h-3 w-20" /></CardContent></Card>
+        <Card><CardContent className="pt-6 space-y-2"><Skeleton className="h-4 w-24" /><Skeleton className="h-8 w-32" /><Skeleton className="h-3 w-20" /></CardContent></Card>
+      </div>
+      <Card>
+        <CardHeader className="pb-3"><Skeleton className="h-5 w-36" /></CardHeader>
+        <CardContent className="space-y-3">
+          <Skeleton className="h-10 w-full" />
+          <div className="grid grid-cols-2 gap-3">
+            {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
+          </div>
+          <Skeleton className="h-9 w-full" />
+          <Skeleton className="h-10 w-full" />
+        </CardContent>
+      </Card>
+      <div className="space-y-2">
+        {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-16 w-full rounded-xl" />)}
+      </div>
+    </div>
+  );
+}
+
 export default function Recurring() {
   const qc = useQueryClient();
   const [amountDisplay, setAmountDisplay] = useState("");
@@ -53,7 +89,7 @@ export default function Recurring() {
     setForm(f => ({ ...f, amount: num.toString() }));
   };
 
-  const { data: rules = [], isLoading } = useQuery<RecurringRule[]>({
+  const { data: rules = [], isLoading, isFetched } = useQuery<RecurringRule[]>({
     queryKey: ["recurring"],
     queryFn: () => apiFetch("/api/recurring").then((r) => r.json()),
   });
@@ -82,6 +118,8 @@ export default function Recurring() {
   const totalExpenses = expenses.reduce((s, r) => s + r.amount, 0);
   const totalIncome = income.reduce((s, r) => s + r.amount, 0);
 
+  if (isLoading && !isFetched) return <RecurringSkeleton />;
+
   return (
     <div className="space-y-6 animate-in fade-in duration-400 [animation-fill-mode:both]">
       <div>
@@ -97,7 +135,7 @@ export default function Recurring() {
               <CardTitle className="text-sm font-medium text-muted-foreground">Receitas fixas/mês</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold">{fmt(totalIncome)}</p>
+              <p className="text-2xl font-bold" style={{ color: "var(--finance-income)" }}>{fmt(totalIncome)}</p>
               <p className="text-xs text-muted-foreground mt-1">{income.length} recorrência{income.length !== 1 ? "s" : ""}</p>
             </CardContent>
           </Card>
@@ -106,7 +144,7 @@ export default function Recurring() {
               <CardTitle className="text-sm font-medium text-muted-foreground">Despesas fixas/mês</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold">{fmt(totalExpenses)}</p>
+              <p className="text-2xl font-bold" style={{ color: "var(--finance-expense)" }}>{fmt(totalExpenses)}</p>
               <p className="text-xs text-muted-foreground mt-1">{expenses.length} recorrência{expenses.length !== 1 ? "s" : ""}</p>
             </CardContent>
           </Card>
@@ -133,32 +171,42 @@ export default function Recurring() {
               value={amountDisplay}
               onChange={(e) => handleAmountChange(e.target.value)}
             />
-            <select
-              className="field"
+            <Select
               value={form.frequency}
-              onChange={(e) => setForm({ ...form, frequency: e.target.value as Frequency })}
+              onValueChange={(v) => setForm({ ...form, frequency: v as Frequency })}
             >
-              {(["DAILY","WEEKLY","MONTHLY","YEARLY"] as Frequency[]).map((f) => (
-                <option key={f} value={f}>{FREQ_LABELS[f]}</option>
-              ))}
-            </select>
-            <select
-              className="field"
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {(["DAILY","WEEKLY","MONTHLY","YEARLY"] as Frequency[]).map((f) => (
+                  <SelectItem key={f} value={f}>{FREQ_LABELS[f]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
               value={form.type}
-              onChange={(e) => setForm({ ...form, type: e.target.value as TransactionType })}
+              onValueChange={(v) => setForm({ ...form, type: v as TransactionType })}
             >
-              <option value="EXPENSE">Despesa</option>
-              <option value="INCOME">Receita</option>
-            </select>
-            <select
-              className="field"
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="EXPENSE">
+                  <span className="text-[var(--finance-expense)]">● </span>Despesa
+                </SelectItem>
+                <SelectItem value="INCOME">
+                  <span className="text-[var(--finance-income)]">● </span>Receita
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            <Select
               value={form.category}
-              onChange={(e) => setForm({ ...form, category: e.target.value as TransactionCategory })}
+              onValueChange={(v) => setForm({ ...form, category: v as TransactionCategory })}
             >
-              {CATEGORIES.map((c) => (
-                <option key={c} value={c}>{CATEGORY_LABELS[c]}</option>
-              ))}
-            </select>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {CATEGORIES.map((c) => (
+                  <SelectItem key={c} value={c}>{CATEGORY_LABELS[c]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-1">
             <label className="text-xs text-muted-foreground">Próxima data</label>
@@ -181,11 +229,7 @@ export default function Recurring() {
       </Card>
 
       {/* List */}
-      {isLoading ? (
-        <div className="space-y-3">
-          {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-16 w-full rounded-xl" />)}
-        </div>
-      ) : rules.length === 0 ? (
+      {rules.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <Repeat className="h-8 w-8 text-muted-foreground/40 mb-3" />
           <p className="text-sm text-muted-foreground">Nenhuma recorrência cadastrada.</p>
@@ -206,7 +250,10 @@ export default function Recurring() {
                   </p>
                 </div>
                 <div className="flex items-center gap-4 shrink-0">
-                  <span className="font-bold text-sm tabular-nums">
+                  <span
+                    className="font-bold text-sm tabular-nums"
+                    style={{ color: rule.type === "INCOME" ? "var(--finance-income)" : "var(--finance-expense)" }}
+                  >
                     {rule.type === "INCOME" ? "+" : "−"}{fmt(rule.amount)}
                   </span>
                   <button
