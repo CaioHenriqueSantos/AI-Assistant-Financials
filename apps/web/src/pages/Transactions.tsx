@@ -28,10 +28,9 @@ const CATEGORY_LABELS: Record<TransactionCategory, string> = {
 
 const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-const fieldCls = "w-full rounded-md border border-foreground/[0.08] bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-foreground/20 transition-colors";
-
 export default function Transactions() {
   const qc = useQueryClient();
+  const [amountDisplay, setAmountDisplay] = useState("");
   const [form, setForm] = useState({
     description: "",
     amount: "",
@@ -39,6 +38,14 @@ export default function Transactions() {
     category: "OTHER" as TransactionCategory,
     date: new Date().toISOString().split("T")[0] ?? "",
   });
+
+  const handleAmountChange = (val: string) => {
+    const digits = val.replace(/\D/g, "");
+    if (!digits) { setAmountDisplay(""); setForm(f => ({ ...f, amount: "" })); return; }
+    const num = parseInt(digits, 10) / 100;
+    setAmountDisplay(num.toLocaleString("pt-BR", { minimumFractionDigits: 2 }));
+    setForm(f => ({ ...f, amount: num.toString() }));
+  };
 
   const { data: transactions = [], isLoading } = useQuery<Transaction[]>({
     queryKey: ["transactions"],
@@ -56,6 +63,7 @@ export default function Transactions() {
       qc.invalidateQueries({ queryKey: ["transactions"] });
       qc.invalidateQueries({ queryKey: ["dashboard"] });
       setForm({ description: "", amount: "", type: "EXPENSE", category: "OTHER", date: new Date().toISOString().split("T")[0] ?? "" });
+      setAmountDisplay("");
     },
   });
 
@@ -81,27 +89,27 @@ export default function Transactions() {
         </CardHeader>
         <CardContent className="space-y-3">
           <input
-            className={fieldCls}
+            className="field"
             placeholder="Descrição"
             value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
           />
           <div className="grid grid-cols-2 gap-3">
             <input
-              type="number"
-              className={fieldCls}
-              placeholder="Valor (R$)"
-              value={form.amount}
-              onChange={(e) => setForm({ ...form, amount: e.target.value })}
+              inputMode="numeric"
+              className="field font-mono"
+              placeholder="R$ 0,00"
+              value={amountDisplay}
+              onChange={(e) => handleAmountChange(e.target.value)}
             />
             <input
               type="date"
-              className={fieldCls}
+              className="field"
               value={form.date}
               onChange={(e) => setForm({ ...form, date: e.target.value })}
             />
             <select
-              className={fieldCls}
+              className="field"
               value={form.type}
               onChange={(e) => setForm({ ...form, type: e.target.value as TransactionType })}
             >
@@ -109,7 +117,7 @@ export default function Transactions() {
               <option value="INCOME">Receita</option>
             </select>
             <select
-              className={fieldCls}
+              className="field"
               value={form.category}
               onChange={(e) => setForm({ ...form, category: e.target.value as TransactionCategory })}
             >

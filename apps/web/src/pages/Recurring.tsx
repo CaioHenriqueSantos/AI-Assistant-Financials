@@ -31,10 +31,10 @@ const FREQ_LABELS: Record<Frequency, string> = {
 };
 
 const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-const fieldCls = "w-full rounded-md border border-foreground/[0.08] bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-foreground/20 transition-colors";
 
 export default function Recurring() {
   const qc = useQueryClient();
+  const [amountDisplay, setAmountDisplay] = useState("");
   const [form, setForm] = useState({
     name: "",
     amount: "",
@@ -44,6 +44,14 @@ export default function Recurring() {
     nextDate: new Date().toISOString().split("T")[0] ?? "",
     active: true,
   });
+
+  const handleAmountChange = (val: string) => {
+    const digits = val.replace(/\D/g, "");
+    if (!digits) { setAmountDisplay(""); setForm(f => ({ ...f, amount: "" })); return; }
+    const num = parseInt(digits, 10) / 100;
+    setAmountDisplay(num.toLocaleString("pt-BR", { minimumFractionDigits: 2 }));
+    setForm(f => ({ ...f, amount: num.toString() }));
+  };
 
   const { data: rules = [], isLoading } = useQuery<RecurringRule[]>({
     queryKey: ["recurring"],
@@ -60,6 +68,7 @@ export default function Recurring() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["recurring"] });
       setForm({ name: "", amount: "", type: "EXPENSE", category: "HOUSING", frequency: "MONTHLY", nextDate: new Date().toISOString().split("T")[0] ?? "", active: true });
+      setAmountDisplay("");
     },
   });
 
@@ -111,21 +120,21 @@ export default function Recurring() {
         </CardHeader>
         <CardContent className="space-y-3">
           <input
-            className={fieldCls}
+            className="field"
             placeholder="Nome (ex: Aluguel, Salário)"
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
           />
           <div className="grid grid-cols-2 gap-3">
             <input
-              type="number"
-              className={fieldCls}
-              placeholder="Valor (R$)"
-              value={form.amount}
-              onChange={(e) => setForm({ ...form, amount: e.target.value })}
+              inputMode="numeric"
+              className="field font-mono"
+              placeholder="R$ 0,00"
+              value={amountDisplay}
+              onChange={(e) => handleAmountChange(e.target.value)}
             />
             <select
-              className={fieldCls}
+              className="field"
               value={form.frequency}
               onChange={(e) => setForm({ ...form, frequency: e.target.value as Frequency })}
             >
@@ -134,7 +143,7 @@ export default function Recurring() {
               ))}
             </select>
             <select
-              className={fieldCls}
+              className="field"
               value={form.type}
               onChange={(e) => setForm({ ...form, type: e.target.value as TransactionType })}
             >
@@ -142,7 +151,7 @@ export default function Recurring() {
               <option value="INCOME">Receita</option>
             </select>
             <select
-              className={fieldCls}
+              className="field"
               value={form.category}
               onChange={(e) => setForm({ ...form, category: e.target.value as TransactionCategory })}
             >
@@ -155,7 +164,7 @@ export default function Recurring() {
             <label className="text-xs text-muted-foreground">Próxima data</label>
             <input
               type="date"
-              className={fieldCls}
+              className="field"
               value={form.nextDate}
               onChange={(e) => setForm({ ...form, nextDate: e.target.value })}
             />

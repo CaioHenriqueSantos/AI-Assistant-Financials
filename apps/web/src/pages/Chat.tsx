@@ -24,6 +24,14 @@ export default function Chat() {
   const [input, setInput] = useState("");
   const [optimisticMsg, setOptimisticMsg] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 128)}px`;
+  }, [input]);
 
   const { data: history = [] } = useQuery<ChatMessage[]>({
     queryKey: ["chat-history"],
@@ -143,7 +151,8 @@ export default function Chat() {
       <div className="shrink-0 pt-3 border-t border-foreground/[0.06]">
         <div className="flex gap-2 items-end">
           <textarea
-            className="flex-1 rounded-xl border border-foreground/[0.08] bg-card backdrop-blur-md px-4 py-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-foreground/20 resize-none transition-colors"
+            ref={textareaRef}
+            className="field flex-1 rounded-xl px-4 py-3 resize-none overflow-hidden leading-relaxed"
             placeholder="Pergunte sobre suas finanças..."
             rows={1}
             value={input}
