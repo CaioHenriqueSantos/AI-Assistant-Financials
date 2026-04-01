@@ -11,7 +11,25 @@ import { toReferenceMonth, startOfMonth, startOfNextMonth } from "../lib/month.j
 export async function dashboardRoutes(app: FastifyInstance) {
   // GET /api/dashboard
   app.get("/", async (req, reply) => {
-    const refMonth = toReferenceMonth(new Date());
+    const currentMonth = toReferenceMonth(new Date());
+
+    // Se o mês atual não tem transações, usar o mês mais recente com dados
+    const currentMonthCount = await prisma.transaction.count({
+      where: {
+        userId: req.userId,
+        date: { gte: startOfMonth(currentMonth), lt: startOfNextMonth(currentMonth) },
+      },
+    });
+
+    let refMonth = currentMonth;
+    if (currentMonthCount === 0) {
+      const lastTx = await prisma.transaction.findFirst({
+        where: { userId: req.userId },
+        orderBy: { date: "desc" },
+        select: { date: true },
+      });
+      if (lastTx) refMonth = toReferenceMonth(new Date(lastTx.date));
+    }
 
     // Buscar as transações recentes sempre (não é agregado, não vai para o summary)
     const recentRows = await prisma.transaction.findMany({

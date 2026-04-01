@@ -1,20 +1,23 @@
 import type { FastifyInstance } from "fastify";
 import { prisma } from "../lib/prisma.js";
-import { toReferenceMonth } from "../lib/month.js";
+import { toReferenceMonth, startOfMonth, startOfNextMonth } from "../lib/month.js";
 import { recalculateMonth } from "../lib/recalculate.js";
 import { CreateTransactionSchema } from "@financials/shared";
 
 export async function transactionsRoutes(app: FastifyInstance) {
   // GET /api/transactions
   app.get("/", async (req, reply) => {
-    const { period, category, type } = req.query as Record<string, string | undefined>;
+    const { period, category, type, month } = req.query as Record<string, string | undefined>;
 
     const where: Record<string, unknown> = { userId: req.userId };
 
     if (type) where["type"] = type;
     if (category) where["category"] = category;
 
-    if (period && period !== "all") {
+    if (month) {
+      // Filtro por mês específico: "2026-03"
+      where["date"] = { gte: startOfMonth(month), lt: startOfNextMonth(month) };
+    } else if (period && period !== "all") {
       const now = new Date();
       const from = new Date();
       if (period === "current_month") from.setDate(1);

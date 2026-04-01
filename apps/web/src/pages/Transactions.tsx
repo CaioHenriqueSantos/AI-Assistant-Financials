@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Trash2 } from "lucide-react";
+import { Loader2, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface Transaction {
   id: string;
@@ -70,6 +70,10 @@ function TransactionsSkeleton() {
   );
 }
 
+function toMonthKey(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
 export default function Transactions() {
   const qc = useQueryClient();
   const [amountDisplay, setAmountDisplay] = useState("");
@@ -81,6 +85,18 @@ export default function Transactions() {
     date: new Date().toISOString().split("T")[0] ?? "",
   });
 
+  const [navDate, setNavDate] = useState(() => {
+    const d = new Date();
+    d.setDate(1);
+    return d;
+  });
+  const selectedMonth = toMonthKey(navDate);
+  const currentMonth = toMonthKey(new Date());
+  const monthLabel = navDate.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+
+  const prevMonth = () => setNavDate(d => { const n = new Date(d); n.setMonth(n.getMonth() - 1); return n; });
+  const nextMonth = () => setNavDate(d => { const n = new Date(d); n.setMonth(n.getMonth() + 1); return n; });
+
   const handleAmountChange = (val: string) => {
     const digits = val.replace(/\D/g, "");
     if (!digits) { setAmountDisplay(""); setForm(f => ({ ...f, amount: "" })); return; }
@@ -90,8 +106,8 @@ export default function Transactions() {
   };
 
   const { data: transactions = [], isLoading, isFetched } = useQuery<Transaction[]>({
-    queryKey: ["transactions"],
-    queryFn: () => apiFetch("/api/transactions?period=current_month").then((r) => r.json()),
+    queryKey: ["transactions", selectedMonth],
+    queryFn: () => apiFetch(`/api/transactions?month=${selectedMonth}`).then((r) => r.json()),
   });
 
   const create = useMutation({
@@ -195,11 +211,24 @@ export default function Transactions() {
 
       {/* List */}
       <Card className="overflow-hidden p-0 gap-0">
-        <CardHeader className="px-6 py-4">
-          <CardTitle className="text-base">Histórico do mês</CardTitle>
+        <CardHeader className="px-6 py-4 flex flex-row items-center justify-between">
+          <CardTitle className="text-base">Histórico</CardTitle>
+          <div className="flex items-center gap-1">
+            <button onClick={prevMonth} className="rounded-md p-1 text-muted-foreground hover:text-foreground hover:bg-foreground/[0.06] transition-colors">
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <span className="w-32 text-center text-sm font-medium capitalize">{monthLabel}</span>
+            <button
+              onClick={nextMonth}
+              disabled={selectedMonth >= currentMonth}
+              className="rounded-md p-1 text-muted-foreground hover:text-foreground hover:bg-foreground/[0.06] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
         </CardHeader>
         {transactions.length === 0 ? (
-          <p className="px-6 pb-6 text-sm text-muted-foreground">Nenhum lançamento este mês.</p>
+          <p className="px-6 pb-6 text-sm text-muted-foreground">Nenhum lançamento em {monthLabel}.</p>
         ) : (
           <table className="w-full text-sm">
             <thead>
