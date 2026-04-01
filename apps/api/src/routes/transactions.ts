@@ -1,5 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { prisma } from "../lib/prisma.js";
+import { toReferenceMonth } from "../lib/month.js";
+import { recalculateMonth } from "../lib/recalculate.js";
 import { CreateTransactionSchema } from "@financials/shared";
 
 export async function transactionsRoutes(app: FastifyInstance) {
@@ -49,6 +51,9 @@ export async function transactionsRoutes(app: FastifyInstance) {
       },
     });
 
+    // Atualizar read model do mês correspondente à transação
+    await recalculateMonth(req.userId, toReferenceMonth(new Date(parsed.data.date)));
+
     return reply.status(201).send(transaction);
   });
 
@@ -58,14 +63,20 @@ export async function transactionsRoutes(app: FastifyInstance) {
 
     const item = await prisma.transaction.findUnique({
       where: { id },
-      select: { userId: true },
+      select: { userId: true, date: true },
     });
 
     if (!item || item.userId !== req.userId) {
       return reply.status(404).send({ error: "Recurso não encontrado" });
     }
 
+    const refMonth = toReferenceMonth(new Date(item.date));
+
     await prisma.transaction.delete({ where: { id } });
+
+    // Recalcular após deletar (guardar mês antes de remover)
+    await recalculateMonth(req.userId, refMonth);
+
     return reply.status(204).send();
   });
 }

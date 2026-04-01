@@ -76,12 +76,14 @@ export async function chatRoutes(app: FastifyInstance) {
           where["date"] = { gte: from, lte: now };
         }
 
-        return prisma.transaction.findMany({ where, orderBy: { date: "desc" } }) as Promise<Transaction[]>;
+        const txRows = await prisma.transaction.findMany({ where, orderBy: { date: "desc" } });
+        return txRows.map((t) => ({ ...t, amount: Number(t.amount) })) as unknown as Transaction[];
       },
       getRecurringRules: async (filters: { type?: string }) => {
         const where: Record<string, unknown> = { active: true, userId: req.userId };
         if (filters.type) where["type"] = filters.type;
-        return prisma.recurringRule.findMany({ where }) as Promise<RecurringRule[]>;
+        const rrRows = await prisma.recurringRule.findMany({ where });
+        return rrRows.map((r) => ({ ...r, amount: Number(r.amount) })) as unknown as RecurringRule[];
       },
     };
 
